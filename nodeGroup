@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <!-- <script src="https://gw.alipayobjects.com/os/antv/pkg/_antv.g6-3.2.5/build/g6.js"></script> -->
+  <script src="https://gw.alipayobjects.com/os/antv/pkg/_antv.g6-3.3.1/dist/g6.min.js"></script>
+  <style>
+    .fn div {
+      border: 1px solid #ccc;
+      margin: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="fn" style="display: flex;">
+    <div onclick="addGroup()">addGroup</div>
+    <div onclick="collapseGroup()">collapseGroup one</div>
+    <div onclick="expandGroup()">expandGroup one</div>
+    <div onclick="showNode()">showNode window1</div>
+    <div onclick="hideNode()">hideNode window1</div>
+  </div>
+  <div id="mountNode"></div>
+  <script>
+    const data = {
+      "nodes": [{
+          "id": "window1",
+          "name": "1",
+          "shape": "rect", //节点形状
+          "label": "window1", //节点名称
+          "groupId": "one",
+          "fill": "red",
+          stateStyles: {
+            // 鼠标hover状态下的配置
+            hover: {
+              fillOpacity: 0.5
+            },
+            leave: {
+              fillOpacity: 1
+            },
+            // 选中节点状态下的配置
+            selected: {
+              lineWidth: 3
+            }
+          },
+          "color": "yellow" // 边框颜色
+          /*
+              x: 100,      // 节点横坐标
+              y: 200,      // 节点纵坐标
+              "color": "#FF9D2D" */
+        },
+        {
+          "id": "window2",
+          "name": "2",
+          "label": "window2",
+          "groupId": "one"
+        },
+        {
+          "id": "window3",
+          "label": "window3",
+          "name": "3"
+        },
+        {
+          "id": "window4",
+          "label": "window4",
+          "name": "4"
+        },
+        {
+          "id": "window5",
+          "name": "5",
+          "label": "window5",
+          "groupId": "one"
+        },
+        {
+          "id": "window6",
+          "name": "6",
+          "label": "window6",
+          "groupId": "two"
+        },
+        {
+          "id": "window7",
+          "label": "window7",
+          "name": "7"
+        },
+        {
+          "id": "window8",
+          "name": "8",
+          "label": "window8",
+          "groupId": "three"
+        }
+      ],
+      "edges": [{ // 连线
+          "source": "window1",
+          "target": "window3",
+          shape: 'quadratic', //smoothArrow
+          style: {
+            stroke: "red", //边的颜色
+            lineWidth: 3, // 连线宽度
+            lineAppendWidth: 3, //边响应鼠标事件时的检测宽度
+            endArrow: true, //边的结束端是否有箭头
+            lineDash: [8, 5] // 虚线
+            /*
+            strokeOpacity 边透明度
+            shadowColor 阴影颜色
+            shadowBlur  阴影范围
+            shadowOffsetX 阴影 x 方向偏移量
+            shadowOffsetX 阴影 y 方向偏移量
+             */
+          },
+          // color: "red", // 连线颜色
+          /* 'label': {
+            text: 'window1-window3',
+            // fill: 'green',
+            fontSize: 14
+          }, */
+          'label': "window1-window3",
+          labelCfg: {
+            refX: 2, //标签在 x 方向的偏移量
+            refY: 0, //标签在 y 方向的偏移量
+            autoRotate: true, //标签文字是否跟随边旋转，默认 false
+            position: "middle", //文本相对于边的位置start，middle(默认), end
+            style: {
+              fill: "blue", // 文本颜色
+              stroke: "#FFF", // 文本描边颜色
+              fontSize: 12, //文本字体大小
+            }
+          },
+          /*   "controlPoints": [{
+                "x": 590,
+                "y": 324
+              },
+              {
+                "x": 590,
+                "y": 260
+              },
+              {
+                "x": 679,
+                "y": 260
+              }
+            ], */
+          "data": {}
+        },
+        {
+          "source": "window3",
+          "target": "window1",
+          shape: 'quadratic'
+        }, {
+          "source": "window1",
+          "target": "window4",
+          "data": {}
+        },
+        {
+          "source": "window3",
+          "target": "window5",
+          "data": {}
+        },
+        {
+          "source": "window4",
+          "target": "window6",
+          "data": {}
+        },
+        {
+          "source": "window5",
+          "target": "window2",
+          "data": {}
+        },
+        {
+          "source": "window6",
+          "target": "window2",
+          "data": {}
+        },
+        {
+          "source": "three",
+          "target": "one",
+          "data": {}
+        }
+      ],
+      "ports": [],
+      "groups": [{ // 都有哪些组
+          "id": "one",
+          "title": "Group 1"
+        },
+        {
+          "id": "two",
+          "title": "Group 2",
+          "type": "constrained"
+        },
+        {
+          "id": "three",
+          "title": "Group 3"
+        }
+      ]
+    }
+    const graph = new G6.Graph({
+      container: 'mountNode',
+      width: 1280,
+      height: 500,
+      groupType: 'rect', // rect
+      defaultEdge: {
+        type: 'quadratic', // 指定边的形状为二阶贝塞尔曲线,防止连线重叠
+      },
+      groupStyle: {
+        default: {},
+        hover: {},
+        collapse: { //收起分组时的配置
+          height: 200, // 分组高度  groupType 为 rect 时有效
+          width: 200 // 分组宽度  groupType 为 rect 时有效
+        }
+      },
+      /* defaultEdge: {
+    // ... 其他属性
+    label: 'edge-label',
+    labelCfg: {
+      refY: -10,
+      refX: 60
+     */
+      linkCenter: false, // 使边连入节点的中心
+      modes: {
+        default: ['drag-canvas', 'drag-group', 'zoom-canvas',
+          'collapse-expand-group', 'drag-node-with-group', "drag-node"
+        ], //, 'drag-node-with-group', 'collapse-expand-group'
+      },
+      layout: {}
+    });
+
+
+    graph.on('node:mouseenter', evt => {
+      console.log(evt)
+      const {
+        item
+      } = evt
+      graph.setItemState(item, 'hover', true)
+    })
+
+    graph.on('node:mouseleave', evt => {
+      const {
+        item
+      } = evt
+      graph.setItemState(item, 'leave', false)
+    })
+    /*  // render之前,绘制i线条
+    graph.edge((edge) => {
+      console.log(edge)
+      return {
+        id: edge.id,
+        shape: 'smoothArrow',
+        labelCfg: {
+          refX: 2, //标签在 x 方向的偏移量
+          refY: 10, //标签在 y 方向的偏移量
+          autoRotate: true, //标签文字是否跟随边旋转，默认 false
+          position: "middle", //文本相对于边的位置start，middle(默认), end
+          style: {
+            fill: "#ddd", // 文本颜色
+            stroke: "#ddd", // 文本描边颜色
+            fontSize: 12, //文本字体大小
+          }
+        },
+        style: {
+          stroke: "red", //边的颜色
+          lineWidth: 3, // 连线宽度
+          lineAppendWidth: 3, //边响应鼠标事件时的检测宽度
+          endArrow: true, //边的结束端是否有箭头
+          lineDash: [8, 5] // 虚线
+          // fill: 'steelblue'
+        }
+      }
+    });
+ */
+    // console.log(graph)
+    // 收起分组
+    function collapseGroup() {
+      graph.collapseGroup('one');
+    }
+
+    // 展开分组
+    function expandGroup() {
+      graph.expandGroup('one')
+    }
+
+    // 显示节点
+    function showNode() {
+      graph.clear();
+      graph.refresh(); // 重新渲染
+      var keyNode = graph.find('window1');
+
+      keyNode.show();
+
+      graph.refresh();
+    }
+    // 隐藏节点
+    function hideNode() {
+      graph.clear();
+      graph.read(data);
+      graph.refresh(); // 重新渲染
+      var keyNode = graph.find('window1');
+
+      keyNode.hide();
+
+      graph.refresh();
+    }
+
+    /* 自定义节点
+    G6.registerNode('nodeName', {
+  options: {
+    style: {},
+    stateStyles: {
+      hover: {},
+      selected: {}
+    }
+  },
+  *
+   * 绘制节点/边，包含文本
+   * @param  {Object} cfg 节点的配置项
+   * @param  {G.Group} group 节点的容器
+   * @return {G.Shape} 绘制的图形，通过node.get('keyShape') 可以获取到
+
+    draw(cfg, group) {},
+      *
+       * 绘制后的附加操作，默认没有任何操作
+       * @param  {Object} cfg 节点的配置项
+       * @param  {G.Group} group 节点的容器
+
+      afterDraw(cfg, group) {},
+      *
+       * 更新节点，包含文本
+       * @override
+       * @param  {Object} cfg 节点的配置项
+       * @param  {Node} node 节点
+
+      update(cfg, node) {},
+      *
+       * 更新节点后的操作，一般同 afterDraw 配合使用
+       * @override
+       * @param  {Object} cfg 节点的配置项
+       * @param  {Node} node 节点
+
+      afterUpdate(cfg, node) {},
+      *
+       * 设置节点的状态，主要是交互状态，业务状态请在 draw 方法中实现
+       * 单图形的节点仅考虑 selected、active 状态，有其他状态需求的用户自己复写这个方法
+       * @param  {String} name 状态名称
+       * @param  {Object} value 状态值
+       * @param  {Node} node 节点
+
+      setState(name, value, node) {},
+      *
+       * 获取控制点
+       * @param  {Object} cfg 节点、边的配置项
+       * @return {Array|null} 控制点的数组,如果为 null，则没有控制点
+
+      getAnchorPoints(cfg) {}
+    }, extendNodeName);
+    */
+
+    function addGroup() {
+      graph.addItem('group', {
+        groupId: 'five',
+        nodes: ['node1', 'node2'],
+        type: 'rect',
+        zIndex: 2,
+
+        title: '分组标题',
+        title: {
+          text: '分组标题',
+          stroke: '',
+          fill: '',
+          offsetX: 10,
+          offsetY: 0
+        }
+      })
+    }
+
+    G6.registerEdge('line-arrow', {
+      getPath: function getPath(points) {
+        console.log(points)
+        var startPoint = points[0];
+        var endPoint = points[1];
+        return [
+          ['M', startPoint.x, startPoint.y],
+          ['L', endPoint.x / 2 + 1 / 2 * startPoint.x, startPoint.y],
+          ['L', endPoint.x / 2 + 1 / 2 * startPoint.x, endPoint.y],
+          ['L', endPoint.x, endPoint.y]
+        ];
+      },
+    }, 'line');
+
+    graph.read(data);
+    graph.render();
+
+    /* 视图大小发生变化时
+      $(window).resize(function () {
+        width = $(element).width();
+        height = $(element).height();
+        graph.changeSize(width, height); //更改画布的尺寸
+    // 改变数据时
+        graph.changeData(data.nodes, data.edges);
+      })
+      */
+  </script>
+
+
+</body>
+
+</html>
